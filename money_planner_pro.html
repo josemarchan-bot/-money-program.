@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Money Navigator</title>
+<style>
+:root{
+  --bg:#f4f7fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;
+  --accent:#2563eb;--accent2:#0f766e;--warn:#b45309;--danger:#b91c1c;--good:#166534;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:860px;margin:auto;padding:18px 14px 80px}
+.hero{background:linear-gradient(145deg,#0f172a,#1e3a8a);color:#fff;padding:20px;border-radius:22px;margin-bottom:14px}
+.hero h1{margin:0 0 4px;font-size:28px} .hero p{margin:0;color:#cbd5e1}
+.grid{display:grid;gap:12px} .g4{grid-template-columns:repeat(4,minmax(0,1fr))} .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+.metric{padding:14px} .metric .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.metric .num{font-size:26px;font-weight:800;margin-top:4px} .metric .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:20px 0 10px}
+.sectionTitle h2{font-size:18px;margin:0} .pill{font-size:12px;padding:5px 9px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:700}
+input,select,button{font:inherit} input,select{width:100%;min-height:44px;border:1px solid #cbd5e1;border-radius:11px;padding:9px 10px;background:#fff;color:var(--text);font-size:16px}
+button{min-height:44px;border:0;border-radius:11px;padding:10px 13px;font-weight:800;cursor:pointer}
+.primary{background:var(--accent);color:#fff} .secondary{background:#e2e8f0;color:#0f172a} .ghost{background:#fff;border:1px solid var(--line)}
+.formrow{display:grid;grid-template-columns:1fr 1fr;gap:10px} label{font-size:12px;color:var(--muted);font-weight:700;display:block;margin:0 0 5px}
+.bill{display:grid;grid-template-columns:auto 1fr 110px;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #eef2f7}
+.bill:last-child{border-bottom:0} .check{width:22px;height:22px;accent-color:var(--accent)} .billName{font-weight:800} .meta{font-size:12px;color:var(--muted);margin-top:3px}
+.amountInput{text-align:right;font-weight:800} .dueSoon{color:var(--warn);font-weight:800} .overdue{color:var(--danger);font-weight:800}
+.progress{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden} .bar{height:100%;background:linear-gradient(90deg,#2563eb,#0f766e);width:0}
+.tip{border-left:4px solid #0f766e;background:#f0fdfa;padding:12px;border-radius:12px;margin-top:10px}
+.warnbox{border-left:4px solid #b45309;background:#fffbeb;padding:12px;border-radius:12px;margin-top:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.small{font-size:12px;color:var(--muted)} .bigAdvice{font-size:18px;font-weight:800;margin-bottom:6px}
+.calendarList{display:grid;gap:8px} .calItem{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eef2f7}
+.calItem:last-child{border-bottom:0} .calDate{font-weight:800;min-width:78px}
+.addGrid{display:grid;grid-template-columns:1.4fr .8fr .7fr auto;gap:8px}
+.remove{background:#fee2e2;color:#991b1b} .saveMsg{font-size:12px;color:var(--good);font-weight:700;min-height:16px;margin-top:6px}
+@media(max-width:700px){
+  .g4{grid-template-columns:1fr 1fr} .g2{grid-template-columns:1fr} .formrow{grid-template-columns:1fr}
+  .bill{grid-template-columns:auto 1fr 92px} .addGrid{grid-template-columns:1fr 1fr} .addGrid button{grid-column:span 2}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <section class="hero">
+    <h1>Money Navigator</h1>
+    <p>Plan every dollar, see what is due next, and build savings without guessing.</p>
+  </section>
+
+  <section class="grid g4">
+    <div class="card metric"><div class="label">Income</div><div class="num" id="mIncome">$0</div><div class="sub">Editable estimate</div></div>
+    <div class="card metric"><div class="label">Bills & needs</div><div class="num" id="mBills">$0</div><div class="sub">Included this month</div></div>
+    <div class="card metric"><div class="label">Savings target</div><div class="num" id="mSave">$0</div><div class="sub">Pay yourself first</div></div>
+    <div class="card metric"><div class="label">Safe to spend</div><div class="num" id="mSafe">$0</div><div class="sub" id="mWeekly">$0/week</div></div>
+  </section>
+
+  <div class="sectionTitle"><h2>1. Set your plan</h2><span class="pill">Start here</span></div>
+  <section class="card">
+    <div class="formrow">
+      <div><label>Estimated take-home income</label><input id="income" type="number" inputmode="decimal" value="3500" min="0" step="0.01"></div>
+      <div><label>Savings goal this month</label><input id="savingGoal" type="number" inputmode="decimal" value="350" min="0" step="0.01"></div>
+    </div>
+    <div class="formrow" style="margin-top:10px">
+      <div><label>Emergency fund already saved</label><input id="emergencySaved" type="number" inputmode="decimal" value="0" min="0" step="0.01"></div>
+      <div><label>Emergency fund target (months of needs)</label><select id="emergencyMonths"><option value="1">1 month</option><option value="3" selected>3 months</option><option value="6">6 months</option></select></div>
+    </div>
+    <div class="actions"><button class="primary" id="savePlan">Save plan</button><button class="secondary" id="resetPlan">Reset</button></div>
+    <div class="saveMsg" id="saveMsg"></div>
+  </section>
+
+  <div class="sectionTitle"><h2>2. What you need to pay</h2><span class="pill" id="dueBadge">Upcoming</span></div>
+  <section class="card">
+    <div class="small" style="margin-bottom:8px">Uncheck anything you do not want counted. Variable card amounts are editable every month.</div>
+    <div id="billList"></div>
+  </section>
+
+  <div class="sectionTitle"><h2>3. Add a bill</h2><span class="pill">Flexible</span></div>
+  <section class="card">
+    <div class="addGrid">
+      <input id="newName" placeholder="Bill name">
+      <input id="newAmount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Amount">
+      <input id="newDue" type="number" inputmode="numeric" min="1" max="31" placeholder="Due day">
+      <button class="primary" id="addBill">+ Add</button>
+    </div>
+    <div id="customBills" style="margin-top:10px"></div>
+  </section>
+
+  <div class="sectionTitle"><h2>4. Savings Coach</h2><span class="pill">Personalized</span></div>
+  <section class="card">
+    <div class="bigAdvice" id="coachHeadline">Your plan</div>
+    <div id="coachText"></div>
+    <div class="tip" id="coachTip"></div>
+    <div class="warnbox" id="reviewTip"></div>
+  </section>
+
+  <div class="sectionTitle"><h2>5. Emergency fund</h2><span class="pill">Safety net</span></div>
+  <section class="card">
+    <div class="small">Target is based on your included monthly needs.</div>
+    <div style="display:flex;justify-content:space-between;gap:10px;margin:10px 0 6px"><strong id="efSaved">$0 saved</strong><strong id="efTarget">$0 target</strong></div>
+    <div class="progress"><div class="bar" id="efBar"></div></div>
+    <div class="small" id="efMessage" style="margin-top:8px"></div>
+  </section>
+
+  <div class="sectionTitle"><h2>6. Bill calendar</h2><span class="pill">Due-date view</span></div>
+  <section class="card">
+    <div class="calendarList" id="calendar"></div>
+    <div class="actions"><button class="ghost" id="downloadCalendar">Download bill calendar (.ics)</button></div>
+    <div class="small">Add the calendar file to Apple Calendar to get real phone reminders. Your browser page itself cannot reliably send reminders when it is closed.</div>
+  </section>
+</div>
+
+<script>
+(() => {
+const DEFAULT_BILLS = [{"id": "pnc", "name": "Tesla / PNC Lending", "amount": 664.73, "due": 10, "type": "fixed", "category": "Loan", "included": true, "note": "Monthly"}, {"id": "discover_loan", "name": "Discover Loan", "amount": 342.38, "due": 14, "type": "fixed", "category": "Loan", "included": true, "note": "Monthly"}, {"id": "phone", "name": "Phone", "amount": 40.0, "due": 21, "type": "fixed", "category": "Utilities", "included": true, "note": "Monthly"}, {"id": "vasa", "name": "VASA Fitness", "amount": 24.99, "due": 8, "type": "fixed", "category": "Subscription", "included": true, "note": "Monthly"}, {"id": "boa", "name": "Bank of America Card", "amount": 500.0, "due": 6, "type": "variable", "category": "Credit Card", "included": true, "note": "Editable \u2022 usual range $200\u2013$500"}, {"id": "discover_card", "name": "Discover Card", "amount": 400.0, "due": 17, "type": "variable", "category": "Credit Card", "included": true, "note": "You usually pay on the 17th \u2022 usual range $300\u2013$400"}, {"id": "apple_card", "name": "Apple Card", "amount": 400.0, "due": 31, "type": "variable", "category": "Credit Card", "included": true, "note": "Editable \u2022 usual range $250\u2013$400"}, {"id": "groceries", "name": "Walmart groceries", "amount": 480.0, "due": 0, "type": "monthly", "category": "Living", "included": true, "note": "$120 every Sunday \u2022 4-Sunday baseline"}, {"id": "haircut", "name": "Haircuts", "amount": 80.0, "due": 0, "type": "monthly", "category": "Personal", "included": true, "note": "$40 every 2 weeks \u2022 typical month"}, {"id": "xbox", "name": "Xbox Game Pass", "amount": 25.0, "due": 22, "type": "fixed", "category": "Subscription", "included": true, "note": "Connected recurring"}, {"id": "youtube", "name": "YouTube Premium", "amount": 15.99, "due": 0, "type": "fixed", "category": "Subscription", "included": true, "note": "Monthly"}, {"id": "gym2", "name": "Gym membership 2", "amount": 15.0, "due": 0, "type": "fixed", "category": "Subscription", "included": true, "note": "Monthly"}, {"id": "amazon", "name": "Amazon Prime", "amount": 14.99, "due": 16, "type": "fixed", "category": "Subscription", "included": true, "note": "Connected recurring"}, {"id": "tradingview_manual", "name": "TradingView", "amount": 15.0, "due": 0, "type": "fixed", "category": "Subscription", "included": true, "note": "Manual amount \u2022 review possible overlap with connected $14.95"}, {"id": "tradingview_connected", "name": "TradingView (connected)", "amount": 14.95, "due": 9, "type": "fixed", "category": "Subscription", "included": true, "note": "Possible duplicate \u2014 leave on until you confirm"}, {"id": "icloud", "name": "iCloud", "amount": 9.99, "due": 0, "type": "fixed", "category": "Subscription", "included": true, "note": "Manual"}, {"id": "apple_billing", "name": "Apple billing", "amount": 11.99, "due": 13, "type": "fixed", "category": "Subscription", "included": true, "note": "Possible overlap with iCloud \u2014 not confirmed"}, {"id": "microsoft", "name": "Microsoft", "amount": 10.86, "due": 2, "type": "fixed", "category": "Subscription", "included": true, "note": "Connected recurring"}, {"id": "uberone", "name": "Uber One", "amount": 9.99, "due": 27, "type": "fixed", "category": "Subscription", "included": true, "note": "Connected recurring"}, {"id": "chatgpt_plus", "name": "ChatGPT Plus", "amount": 20.0, "due": 0, "type": "fixed", "category": "Subscription", "included": true, "note": "Manual"}, {"id": "chatgpt_connected", "name": "ChatGPT (connected)", "amount": 9.2, "due": 1, "type": "fixed", "category": "Subscription", "included": true, "note": "Possible overlap \u2014 not confirmed"}, {"id": "citizen", "name": "Citizen", "amount": 5.99, "due": 13, "type": "fixed", "category": "Subscription", "included": true, "note": "Connected recurring"}, {"id": "college", "name": "College payment", "amount": 500.0, "due": 5, "month": 10, "year": 2026, "type": "oneoff", "category": "One-time", "included": true, "note": "One-time \u2022 Oct 5, 2026"}];
+const STORE='money_navigator_v1';
+let state={income:3500,savingGoal:350,emergencySaved:0,emergencyMonths:3,bills:DEFAULT_BILLS,custom:[]};
+const $=id=>document.getElementById(id);
+const money=n=>'$'+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(STORE)||'null');
+    if(s) state={...state,...s,bills:Array.isArray(s.bills)?s.bills:DEFAULT_BILLS,custom:Array.isArray(s.custom)?s.custom:[]};
+  }catch(e){}
+  $('income').value=state.income; $('savingGoal').value=state.savingGoal; $('emergencySaved').value=state.emergencySaved; $('emergencyMonths').value=String(state.emergencyMonths);
+}
+function persist(msg='Saved'){
+  state.income=+$('income').value||0; state.savingGoal=+$('savingGoal').value||0; state.emergencySaved=+$('emergencySaved').value||0; state.emergencyMonths=+$('emergencyMonths').value||3;
+  localStorage.setItem(STORE,JSON.stringify(state)); $('saveMsg').textContent=msg; setTimeout(()=>{$('saveMsg').textContent=''},1800);
+}
+function nextDateForBill(b, now=new Date()){
+  if(b.type==='oneoff'){
+    return new Date(b.year,b.month-1,b.due);
+  }
+  if(!b.due) return null;
+  let y=now.getFullYear(),m=now.getMonth();
+  let max=new Date(y,m+1,0).getDate(), d=Math.min(b.due,max);
+  let dt=new Date(y,m,d);
+  if(dt < new Date(y,m,now.getDate())){m++; if(m>11){m=0;y++} max=new Date(y,m+1,0).getDate(); dt=new Date(y,m,Math.min(b.due,max));}
+  return dt;
+}
+function daysUntil(dt){
+  const a=new Date(); a.setHours(0,0,0,0); const b=new Date(dt); b.setHours(0,0,0,0); return Math.round((b-a)/86400000);
+}
+function allBills(){return [...state.bills,...state.custom]}
+function billTotal(){
+  const now=new Date();
+  return allBills().filter(b=>b.included!==false).filter(b=>b.type!=='oneoff'||(b.year===now.getFullYear()&&b.month===now.getMonth()+1)).reduce((s,b)=>s+(+b.amount||0),0);
+}
+function renderBills(){
+  const box=$('billList'); box.innerHTML='';
+  state.bills.forEach((b,i)=>{
+    const row=document.createElement('div'); row.className='bill';
+    const dt=nextDateForBill(b), du=dt?daysUntil(dt):null;
+    const dueText=dt ? `Due ${dt.toLocaleDateString(undefined,{month:'short',day:'numeric'})}${du!==null&&du>=0?' • '+du+'d':''}` : b.note;
+    row.innerHTML=`<input class="check" type="checkbox" ${b.included!==false?'checked':''} aria-label="Include ${b.name}">
+      <div><div class="billName">${b.name}</div><div class="meta ${du!==null&&du<=3?'dueSoon':''}">${dueText}${b.note?' • '+b.note:''}</div></div>
+      <input class="amountInput" type="number" inputmode="decimal" step="0.01" min="0" value="${Number(b.amount).toFixed(2)}">`;
+    const [chk,amt]=row.querySelectorAll('input');
+    chk.addEventListener('change',()=>{state.bills[i].included=chk.checked; persist('Updated'); refresh();});
+    amt.addEventListener('input',()=>{state.bills[i].amount=+amt.value||0; persist('Updated'); refreshMetrics(); renderCoach(); renderEmergency(); renderCalendar();});
+    box.appendChild(row);
+  });
+}
+function renderCustom(){
+  const box=$('customBills'); box.innerHTML='';
+  state.custom.forEach((b,i)=>{
+    const row=document.createElement('div'); row.className='bill';
+    row.innerHTML=`<input class="check" type="checkbox" ${b.included!==false?'checked':''}>
+      <div><div class="billName">${b.name}</div><div class="meta">${b.due?'Due day '+b.due:'No due day'} • Added by you</div></div>
+      <div style="display:flex;gap:6px;align-items:center"><input class="amountInput" type="number" inputmode="decimal" step="0.01" value="${Number(b.amount).toFixed(2)}"><button class="remove" type="button">×</button></div>`;
+    const inputs=row.querySelectorAll('input'); inputs[0].addEventListener('change',()=>{state.custom[i].included=inputs[0].checked;persist('Updated');refresh();});
+    inputs[1].addEventListener('input',()=>{state.custom[i].amount=+inputs[1].value||0;persist('Updated');refreshMetrics();renderCoach();renderEmergency();renderCalendar();});
+    row.querySelector('button').addEventListener('click',()=>{state.custom.splice(i,1);persist('Removed');renderCustom();refresh();});
+    box.appendChild(row);
+  });
+}
+function refreshMetrics(){
+  state.income=+$('income').value||0; state.savingGoal=+$('savingGoal').value||0;
+  const bills=billTotal(), safe=state.income-bills-state.savingGoal;
+  $('mIncome').textContent=money(state.income); $('mBills').textContent=money(bills); $('mSave').textContent=money(state.savingGoal); $('mSafe').textContent=money(safe);
+  $('mSafe').style.color=safe<0?'#b91c1c':'#166534'; $('mWeekly').textContent=money(Math.max(0,safe)/4.33)+'/week';
+}
+function renderCoach(){
+  const income=+$('income').value||0, goal=+$('savingGoal').value||0, bills=billTotal(), left=income-bills, safe=left-goal;
+  const saveRate=income?goal/income*100:0;
+  let head='', text='', tip='';
+  if(income<=0){head='Enter your income'; text='Once you enter your take-home amount, I can show how much to reserve, save, and safely spend.';tip='Start with your next actual paycheck or monthly take-home amount.';}
+  else if(left<0){head='Your bills are higher than your income'; text=`You are short by ${money(-left)} before savings. The priority is to reduce or delay non-essential costs and avoid adding new debt.`; tip='Start by reviewing possible duplicate subscriptions and variable card spending.';}
+  else if(safe<0){head='Your savings goal is too aggressive for this month'; text=`After bills you have ${money(left)} left. Lower the savings goal to at most that amount, or trim spending first.`; tip='A smaller automatic transfer you can keep every month is better than a goal you have to reverse later.';}
+  else{head=`You can save ${money(goal)} and still have ${money(safe)} left`; text=`That is a ${saveRate.toFixed(1)}% savings rate. Your safe spending limit is about ${money(safe/4.33)} per week after bills and savings.`; tip=saveRate<10?'Try moving toward 10% savings over time. Increase by $25–$50 when a bill drops or you have a stronger paycheck.':saveRate<20?'You are in a solid range. Keep the savings transfer automatic and avoid letting variable-card balances grow.':'Strong savings target. Keep enough cash available for upcoming bills and your emergency fund.';}
+  $('coachHeadline').textContent=head; $('coachText').textContent=text; $('coachTip').textContent=tip;
+  $('reviewTip').textContent='Money-saving review: there are a few possible duplicate subscriptions/cards that you have not confirmed yet. I left them included so the plan stays conservative. Review TradingView, Apple/iCloud, and ChatGPT charges before canceling or merging anything.';
+}
+function renderEmergency(){
+  state.emergencySaved=+$('emergencySaved').value||0; state.emergencyMonths=+$('emergencyMonths').value||3;
+  const needs=billTotal(), target=needs*state.emergencyMonths, pct=target?Math.min(100,state.emergencySaved/target*100):0;
+  $('efSaved').textContent=money(state.emergencySaved)+' saved'; $('efTarget').textContent=money(target)+' target'; $('efBar').style.width=pct+'%';
+  const gap=Math.max(0,target-state.emergencySaved); $('efMessage').textContent=gap>0?`You are ${money(gap)} away. At ${money(+$('savingGoal').value||0)} per month, that would take about ${Math.ceil(gap/Math.max(1,+$('savingGoal').value||0))} months.`:'Target reached. Consider directing new savings toward debt payoff or a longer-term goal.';
+}
+function renderCalendar(){
+  const now=new Date(); const upcoming=allBills().filter(b=>b.included!==false).map(b=>({b,dt:nextDateForBill(b,now)})).filter(x=>x.dt && x.dt>=new Date(now.getFullYear(),now.getMonth(),now.getDate())).sort((a,b)=>a.dt-b.dt).slice(0,12);
+  $('calendar').innerHTML=upcoming.map(x=>`<div class="calItem"><div><div class="billName">${x.b.name}</div><div class="meta">${x.b.category||'Bill'}</div></div><div style="text-align:right"><div class="calDate">${x.dt.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div><div class="meta">${money(x.b.amount)}</div></div></div>`).join('') || '<div class="small">No dated bills yet.</div>';
+  const soon=upcoming.filter(x=>daysUntil(x.dt)<=7); $('dueBadge').textContent=soon.length?soon.length+' due in 7 days':'Nothing due in 7 days';
+}
+function renderCalendarFile(){
+  const now=new Date(); const pad=n=>String(n).padStart(2,'0');
+  const esc=s=>String(s).replace(/([,;\\])/g,'\\$1').replace(/\n/g,'\\n');
+  let lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Money Navigator//EN'];
+  allBills().filter(b=>b.included!==false&&b.due).forEach((b,idx)=>{
+    const start=nextDateForBill(b,now); if(!start)return;
+    const y=start.getFullYear(),m=pad(start.getMonth()+1),d=pad(start.getDate());
+    lines.push('BEGIN:VEVENT','UID:'+Date.now()+'-'+idx+'@moneynavigator','DTSTART;VALUE=DATE:'+y+m+d,'SUMMARY:'+esc('Pay '+b.name+' '+money(b.amount)),'DESCRIPTION:'+esc('Money Navigator bill reminder'),'BEGIN:VALARM','TRIGGER:-P2D','ACTION:DISPLAY','DESCRIPTION:'+esc('Upcoming payment: '+b.name),'END:VALARM','END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='money-navigator-bills.ics'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function refresh(){refreshMetrics();renderCoach();renderEmergency();renderCalendar();}
+$('savePlan').addEventListener('click',()=>{persist();refresh();});
+$('resetPlan').addEventListener('click',()=>{if(confirm('Reset your saved plan to the starting version?')){localStorage.removeItem(STORE);location.reload();}});
+['income','savingGoal','emergencySaved','emergencyMonths'].forEach(id=>$(id).addEventListener('input',refresh));
+$('addBill').addEventListener('click',()=>{
+  const name=$('newName').value.trim(),amount=+$('newAmount').value||0,due=+$('newDue').value||0;
+  if(!name){alert('Enter a bill name.');return} if(due<0||due>31){alert('Due day must be 1–31.');return}
+  state.custom.push({id:'custom_'+Date.now(),name,amount,due:due||0,type:'fixed',category:'Custom',included:true,note:'Added by you'});
+  $('newName').value='';$('newAmount').value='';$('newDue').value='';persist('Bill added');renderCustom();refresh();
+});
+$('downloadCalendar').addEventListener('click',renderCalendarFile);
+load();renderBills();renderCustom();refresh();
+})();
+</script>
+</body>
+</html>
